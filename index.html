@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fullkitting — MyDreem Stock Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #E3DFCE;
+    --paper-raised: #EEEADB;
+    --ink: #221F1A;
+    --ink-soft: #4B4A3E;
+    --muted: #7A7863;
+    --rule: #ABA68D;
+    --rule-soft: #C9C4AC;
+    --accent: #AD6425;
+    --accent-ink: #FBF4E9;
+    --ok: #3E6B49;
+    --ok-bg: #DEE8DD;
+    --bad: #9A3324;
+    --bad-bg: #EFDCD6;
+    --focus: #1E5FA8;
+    --radius: 3px;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1B1C16;
+      --paper-raised: #232419;
+      --ink: #EDEADC;
+      --ink-soft: #C7C3AE;
+      --muted: #938F78;
+      --rule: #474530;
+      --rule-soft: #39381F;
+      --accent: #DB9448;
+      --accent-ink: #231705;
+      --ok: #7DBB89;
+      --ok-bg: #223526;
+      --bad: #E17E6C;
+      --bad-bg: #3A2420;
+      --focus: #74AEEA;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1B1C16;
+    --paper-raised: #232419;
+    --ink: #EDEADC;
+    --ink-soft: #C7C3AE;
+    --muted: #938F78;
+    --rule: #474530;
+    --rule-soft: #39381F;
+    --accent: #DB9448;
+    --accent-ink: #231705;
+    --ok: #7DBB89;
+    --ok-bg: #223526;
+    --bad: #E17E6C;
+    --bad-bg: #3A2420;
+    --focus: #74AEEA;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 36px 20px 64px;
+  }
+  header.top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 18px;
+    margin-bottom: 28px;
+  }
+  .brand-mark {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .brand-mark .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    border: 1px solid var(--rule);
+    padding: 2px 6px;
+    border-radius: var(--radius);
+  }
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .sub {
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin-top: 4px;
+    max-width: 46ch;
+    line-height: 1.5;
+  }
+  .status-box {
+    text-align: right;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 150px;
+  }
+  .status-box .dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 5px;
+    background: var(--muted);
+  }
+  .status-box[data-state="ok"] .dot { background: var(--ok); }
+  .status-box[data-state="error"] .dot { background: var(--bad); }
+  .status-box[data-state="loading"] .dot { background: var(--accent); }
+  .refresh-btn {
+    margin-top: 6px;
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 4px 9px;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .refresh-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .refresh-btn:focus-visible, input:focus-visible, button:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  form.controls {
+    display: grid;
+    grid-template-columns: 1fr 160px auto;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 10px;
+  }
+  @media (max-width: 620px) {
+    form.controls { grid-template-columns: 1fr; }
+  }
+  label.field-label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    background: var(--paper-raised);
+    border: 1.5px solid var(--rule);
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    padding: 11px 12px;
+    border-radius: var(--radius);
+  }
+  input::placeholder { color: var(--muted); }
+  button.go {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 12px 22px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  button.go:hover { background: var(--accent); color: var(--accent-ink); }
+  button.go:disabled { opacity: 0.5; cursor: default; }
+
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 30px;
+  }
+
+  .panel {
+    border-top: 1px solid var(--rule);
+    padding-top: 22px;
+  }
+  .empty-state {
+    color: var(--muted);
+    font-size: 14px;
+    padding: 30px 0;
+  }
+  .load-state {
+    color: var(--ink-soft);
+    font-size: 14px;
+    padding: 30px 0;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .error-state {
+    background: var(--bad-bg);
+    color: var(--bad);
+    border: 1px solid var(--bad);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .not-found-state {
+    border: 1px dashed var(--rule);
+    border-radius: var(--radius);
+    padding: 18px 16px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .result-block { animation: none !important; }
+  }
+  .result-block { animation: reveal 0.25s ease-out; }
+
+  .product-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 20px;
+  }
+  .product-row h2 {
+    font-size: 19px;
+    margin: 0;
+    font-weight: 600;
+  }
+  .sku-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .verdict {
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: var(--paper-raised);
+  }
+  .verdict .num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 44px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .verdict .num.zero { color: var(--bad); }
+  .verdict .num-label {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+  .verdict .bneck {
+    text-align: right;
+    max-width: 320px;
+  }
+  .verdict .bneck .lbl {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .verdict .bneck .name {
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  table.stock-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  table.stock-table caption {
+    text-align: left;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+    margin-bottom: 8px;
+    caption-side: top;
+  }
+  table.stock-table th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+    color: var(--ink-soft);
+    border-bottom: 1.5px solid var(--ink);
+    padding: 7px 8px;
+  }
+  table.stock-table th.num, table.stock-table td.num {
+    text-align: right;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  table.stock-table td {
+    padding: 9px 8px;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  table.stock-table tr.bottleneck td {
+    background: var(--bad-bg);
+    font-weight: 600;
+  }
+  table.stock-table tr.bottleneck td:first-child {
+    border-left: 3px solid var(--bad);
+  }
+  .note-chip {
+    display: inline-block;
+    font-size: 10.5px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  .source-chip {
+    font-size: 10.5px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .unmatched-box {
+    margin-top: 18px;
+    border: 1px dashed var(--bad);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .unmatched-box .ttl {
+    color: var(--bad);
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    margin-bottom: 6px;
+  }
+  .unmatched-box ul { margin: 0; padding-left: 18px; }
+
+  .target-block {
+    margin-top: 26px;
+    border-top: 1px solid var(--rule);
+    padding-top: 18px;
+  }
+  .target-block h3 {
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+    margin: 0 0 10px;
+    font-weight: 600;
+    text-transform: none;
+  }
+  td.short { color: var(--bad); font-weight: 600; }
+  td.ok { color: var(--ok); }
+
+  footer.app-footer {
+    margin-top: 44px;
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="brand-mark">
+        <h1>Fullkitting</h1>
+        <span class="tag">MYDREEM</span>
+      </div>
+      <div class="sub">Pick a finished good — see how many cartons the raw material stock actually supports, live from the kitting sheets.</div>
+    </div>
+    <div class="status-box" id="statusBox" data-state="loading">
+      <span class="dot"></span><span id="statusText">connecting…</span>
+      <div><button class="refresh-btn" id="refreshBtn" type="button">Refresh data</button></div>
+    </div>
+  </header>
+
+  <form class="controls" id="controlsForm">
+    <div>
+      <label class="field-label" for="fgInput">Product</label>
+      <input type="text" id="fgInput" list="fgOptions" placeholder="Start typing a product name…" autocomplete="off">
+      <datalist id="fgOptions"></datalist>
+    </div>
+    <div>
+      <label class="field-label" for="targetInput">Target cartons (optional)</label>
+      <input type="number" id="targetInput" min="0" placeholder="e.g. 500">
+    </div>
+    <button class="go" id="goBtn" type="submit" disabled>Check stock</button>
+  </form>
+  <div class="hint">Matches raw materials by exact name against the Raw sheet and the IMS stock sheets. An item that isn't an exact match is flagged, not guessed.</div>
+
+  <div class="panel" id="panel">
+    <div class="empty-state" id="emptyState">No product checked yet. Pick one above and press Check stock.</div>
+  </div>
+
+  <footer class="app-footer">
+    Sources: Full Kitting Sheet v4 MYDream (Raw sheet) · Ultimate IMS MyDreem v2 · Ultimate IMS Saraswati · Ultimate IMS MAYANK FOODS v2 — read live through the company Apps Script service on every load.
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // Paste the deployed Apps Script web-app URL (ending /exec) here, or leave blank to be asked once.
+  var API_URL = '';
+
+  function getApiUrl() {
+    if (API_URL) return API_URL;
+    try { return localStorage.getItem('fk_api_url') || ''; } catch (e) { return ''; }
+  }
+
+  var state = {
+    rawRows: [],
+    fgNames: [],
+    stockMap: new Map(),
+    ready: false
+  };
+
+  var els = {
+    statusBox: document.getElementById('statusBox'),
+    statusText: document.getElementById('statusText'),
+    refreshBtn: document.getElementById('refreshBtn'),
+    fgInput: document.getElementById('fgInput'),
+    fgOptions: document.getElementById('fgOptions'),
+    targetInput: document.getElementById('targetInput'),
+    goBtn: document.getElementById('goBtn'),
+    form: document.getElementById('controlsForm'),
+    panel: document.getElementById('panel')
+  };
+
+  function setStatus(state_, text) {
+    els.statusBox.setAttribute('data-state', state_);
+    els.statusText.textContent = text;
+  }
+
+  var jsonpCounter = 0;
+  function callApi(url) {
+    return new Promise(function (resolve, reject) {
+      var cbName = '__fkCB' + (jsonpCounter++);
+      var script = document.createElement('script');
+      var timeoutId = setTimeout(function () {
+        cleanup();
+        reject(new Error('Timed out waiting for the stock service'));
+      }, 60000);
+      function cleanup() {
+        clearTimeout(timeoutId);
+        try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+        if (script.parentNode) script.parentNode.removeChild(script);
+      }
+      window[cbName] = function (data) { cleanup(); resolve(data); };
+      script.onerror = function () { cleanup(); reject(new Error('Could not load the stock service URL')); };
+      script.src = url + (url.indexOf('?') > -1 ? '&' : '?') + 'callback=' + cbName + '&_=' + Date.now();
+      document.body.appendChild(script);
+    });
+  }
+
+  function applyData(data) {
+    var seen = {};
+    state.rawRows = data.raw.map(function (r) {
+      seen[r.fg] = true;
+      return { fg: r.fg, fgCode: r.code, item: r.item, unit: r.unit, qty: r.qty };
+    });
+    state.fgNames = Object.keys(seen).sort(function (a, b) { return a.localeCompare(b); });
+    state.stockMap = new Map();
+    data.stock.forEach(function (s) {
+      var key = s.name.toLowerCase();
+      if (state.stockMap.has(key)) return;
+      state.stockMap.set(key, { name: s.name, qty: s.qty, unit: s.unit, finalStockText: s.finalText, note: s.note, source: s.source });
+    });
+  }
+
+  function populateFGOptions() {
+    els.fgOptions.innerHTML = '';
+    state.fgNames.forEach(function (name) {
+      var opt = document.createElement('option');
+      opt.value = name;
+      els.fgOptions.appendChild(opt);
+    });
+  }
+
+  function showSetup(msg) {
+    setStatus('error', 'setup needed');
+    els.panel.innerHTML = '<div class="error-state">' + escapeHTML(msg) + '</div>' +
+      '<form id="setupForm" style="margin-top:14px"><label class="field-label" for="apiUrl">Stock service URL (Apps Script web app, ends with /exec)</label>' +
+      '<input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec"><br><br>' +
+      '<button class="go" type="submit">Save and load</button></form>';
+    document.getElementById('setupForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var u = document.getElementById('apiUrl').value.trim();
+      if (!/^https:\/\/script\.google\.com\/.+\/exec/.test(u)) { alert('That does not look like an Apps Script /exec URL.'); return; }
+      try { localStorage.setItem('fk_api_url', u); } catch (err) {}
+      els.panel.innerHTML = '';
+      loadAll();
+    });
+  }
+
+  function loadAll() {
+    els.goBtn.disabled = true;
+    var url = getApiUrl();
+    if (!url) { showSetup('No stock service URL set yet. Paste the web-app URL once.'); return Promise.resolve(); }
+    setStatus('loading', 'pulling live stock…');
+    return callApi(url).then(function (data) {
+      if (!data || data.error) throw new Error(data && data.error ? data.error : 'Empty response');
+      applyData(data);
+      populateFGOptions();
+      state.ready = true;
+      els.goBtn.disabled = false;
+      var when = new Date(data.ts || Date.now());
+      setStatus('ok', 'live — ' + when.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }));
+      if (data.errors && data.errors.length) {
+        els.panel.innerHTML = '<div class="error-state">Some stock sheets could not be read, so their items will show as not found: ' +
+          escapeHTML(data.errors.join(' | ')) + '</div>';
+      } else {
+        els.panel.innerHTML = '<div class="empty-state" id="emptyState">No product checked yet. Pick one above and press Check stock.</div>';
+      }
+    }).catch(function (err) {
+      showSetup('Could not reach the stock service (' + (err && err.message ? err.message : 'network error') +
+        '). Check the web-app URL and that access is set to "Anyone", then press Refresh data.');
+    });
+  }
+
+  function fmt(n) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    return Number(n).toLocaleString('en-IN', { maximumFractionDigits: 3 });
+  }
+
+  function computeForFG(fgName) {
+    var items = state.rawRows.filter(function (r) { return r.fg === fgName; });
+    if (!items.length) return null;
+    var results = items.map(function (it) {
+      var stock = state.stockMap.get(it.item.toLowerCase()) || null;
+      var maxCartons = (stock && stock.qty !== null && it.qty > 0)
+        ? Math.floor(stock.qty / it.qty) : null;
+      return { fg: it.fg, fgCode: it.fgCode, item: it.item, unit: it.unit, qty: it.qty, stock: stock, maxCartons: maxCartons };
+    });
+    var matched = results.filter(function (r) { return r.maxCartons !== null; });
+    var unmatched = results.filter(function (r) { return !r.stock; });
+    var bottleneck = null;
+    matched.forEach(function (r) {
+      if (!bottleneck || r.maxCartons < bottleneck.maxCartons) bottleneck = r;
+    });
+    return { fgCode: items[0].fgCode, results: results, matched: matched, unmatched: unmatched, bottleneck: bottleneck };
+  }
+
+  function renderResult(fgName, targetQty) {
+    var data = computeForFG(fgName);
+    if (!data) {
+      els.panel.innerHTML = '<div class="not-found-state">"' + escapeHTML(fgName) +
+        '" has no BOM rows in the Raw sheet under that exact name. Check the spelling, or add its raw-material list to the Raw sheet first.</div>';
+      return;
+    }
+
+    var html = '<div class="result-block">';
+    html += '<div class="product-row"><h2>' + escapeHTML(fgName) + '</h2>' +
+      (data.fgCode ? '<span class="sku-tag">' + escapeHTML(data.fgCode) + '</span>' : '') + '</div>';
+
+    if (data.bottleneck) {
+      var maxN = data.bottleneck.maxCartons;
+      html += '<div class="verdict">' +
+        '<div><div class="num' + (maxN === 0 ? ' zero' : '') + '">' + fmt(maxN) + '</div>' +
+        '<div class="num-label">carton' + (maxN === 1 ? '' : 's') + ' possible right now</div></div>' +
+        '<div class="bneck"><div class="lbl">BOTTLENECK</div><div class="name">' + escapeHTML(data.bottleneck.item) + '</div></div>' +
+        '</div>';
+    } else {
+      html += '<div class="verdict"><div><div class="num zero">—</div><div class="num-label">no matched raw materials to compute from</div></div></div>';
+    }
+
+    html += '<table class="stock-table"><thead><tr>' +
+      '<th>Item</th><th class="num">Qty / carton</th><th class="num">Stock</th><th class="num">Max carton</th>' +
+      '</tr></thead><tbody>';
+    data.results.forEach(function (r) {
+      var isBottleneck = data.bottleneck && r.item === data.bottleneck.item && r.maxCartons === data.bottleneck.maxCartons;
+      html += '<tr' + (isBottleneck ? ' class="bottleneck"' : '') + '>';
+      html += '<td>' + escapeHTML(r.item) +
+        (r.stock && r.stock.note ? '<div class="note-chip">' + escapeHTML(r.stock.note) + '</div>' : '') +
+        (r.stock ? '<div class="source-chip">' + escapeHTML(r.stock.source) + '</div>' : '') +
+        '</td>';
+      html += '<td class="num">' + fmt(r.qty) + ' ' + escapeHTML(r.unit) + '</td>';
+      html += '<td class="num">' + (r.stock ? escapeHTML(r.stock.finalStockText || (fmt(r.stock.qty) + ' ' + r.stock.unit)) : 'not found') + '</td>';
+      html += '<td class="num">' + (r.maxCartons === null ? '—' : fmt(r.maxCartons)) + '</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+
+    if (data.unmatched.length) {
+      html += '<div class="unmatched-box"><div class="ttl">NOT FOUND IN ANY IMS SHEET — EXCLUDED FROM THE CALCULATION</div><ul>';
+      data.unmatched.forEach(function (r) { html += '<li>' + escapeHTML(r.item) + '</li>'; });
+      html += '</ul></div>';
+    }
+
+    if (targetQty && targetQty > 0) {
+      html += '<div class="target-block"><h3>FOR ' + fmt(targetQty) + ' CARTONS</h3>';
+      html += '<table class="stock-table"><thead><tr><th>Item</th><th class="num">Required</th><th class="num">Stock</th><th class="num">Shortfall</th></tr></thead><tbody>';
+      data.results.forEach(function (r) {
+        var required = r.qty * targetQty;
+        var stockQty = r.stock ? r.stock.qty : null;
+        var shortfall = (stockQty !== null) ? Math.max(0, required - stockQty) : null;
+        html += '<tr><td>' + escapeHTML(r.item) + '</td>';
+        html += '<td class="num">' + fmt(required) + ' ' + escapeHTML(r.unit) + '</td>';
+        html += '<td class="num">' + (stockQty !== null ? fmt(stockQty) + ' ' + r.stock.unit : 'not found') + '</td>';
+        if (shortfall === null) {
+          html += '<td class="num">—</td>';
+        } else if (shortfall > 0) {
+          html += '<td class="num short">−' + fmt(shortfall) + '</td>';
+        } else {
+          html += '<td class="num ok">covered</td>';
+        }
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+
+    html += '</div>';
+    els.panel.innerHTML = html;
+  }
+
+  function escapeHTML(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  els.form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var fg = els.fgInput.value.trim();
+    if (!fg) return;
+    var target = parseFloat(els.targetInput.value);
+    renderResult(fg, isNaN(target) ? null : target);
+  });
+
+  els.refreshBtn.addEventListener('click', function () { loadAll(); });
+
+  loadAll();
+})();
+</script>
+</body>
+</html>
